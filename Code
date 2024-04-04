@@ -1,0 +1,48 @@
+clc;
+close all;
+clear all;
+
+% Loading the EEG data
+x = load('s0306lrem.mat');
+
+% Sample frequency
+fs = 100000;
+t = (0:length(x.val)-1)/fs; % Time vector
+
+% Original EEG signal
+y = x.val';
+figure;
+plot(t, y);
+title('Original EEG Signal');
+xlabel('Time (s)');
+ylabel('Amplitude');
+grid on;
+
+% Filter parameters
+filter_order = 10000;            % Filter order
+original_cutoff_freq = 3000;     % Original cutoff frequency (Hz)
+reduced_cutoff_freq = 1000;      % Reduced cutoff frequency (Hz)
+
+% Design the FIR filter with original cutoff frequency
+fir_coeffs = fir1(filter_order, original_cutoff_freq/(fs/2), 'low');
+
+% Apply the FIR filter to each data channel separately and plot
+for i = 1:size(y, 2)
+    % Filter the signal with the original cutoff frequency
+    filtered_data = filtfilt(fir_coeffs, 1, y(:,i));
+
+    % Design a new FIR filter with reduced cutoff frequency
+    fir_coeffs_reduced = fir1(filter_order, reduced_cutoff_freq/(fs/2), 'low');
+
+    % Filter the signal with the reduced cutoff frequency
+    filtered_data_reduced = filtfilt(fir_coeffs_reduced, 1, y(:,i));
+
+    % Plot both filtered signals
+    figure;
+    plot(t, filtered_data, 'b', t, filtered_data_reduced, 'r');
+    title(['Filtered EEG Signal - Channel ', num2str(i)]);
+    xlabel('Time (s)');
+    ylabel('Amplitude');
+    legend('Original Cutoff', 'Reduced Cutoff');
+    grid on;
+end
